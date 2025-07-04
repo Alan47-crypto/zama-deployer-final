@@ -107,6 +107,8 @@ function Deployer() {
       setDeployedAddress('');
       setStatus('✅ Wallet Connected. Preparing deployment...');
 
+      console.log('Inspecting the walletProvider object:', walletProvider);
+
       const provider = new ethers.providers.Web3Provider(walletProvider);
       const signer = provider.getSigner();
 
