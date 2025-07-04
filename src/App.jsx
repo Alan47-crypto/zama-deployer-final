@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 
-// AppKit and Ethers are imported normally
+// Imports from the Reown AppKit library
 import { createAppKit } from "@reown/appkit/react";
 import { Ethers5Adapter } from "@reown/appkit-adapter-ethers5";
 import { useAppKit, useAppKitProvider, useAppKitAccount } from '@reown/appkit/react';
 import { sepolia } from "@reown/appkit/networks";
-
-// Notice there is NO import for fhevmjs here. We will load it dynamically later.
 
 const WALLETCONNECT_PROJECT_ID = 'd4df6eb029e14fa073ea8d7c57260b38'; 
 const contractABI = [{"inputs":[{"internalType":"externalEuint32","name":"inputEuint32","type":"bytes32"},{"internalType":"bytes","name":"inputProof","type":"bytes"}],"name":"decrement","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"getCount","outputs":[{"internalType":"euint32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"externalEuint32","name":"inputEuint32","type":"bytes32"},{"internalType":"bytes","name":"inputProof","type":"bytes"}],"name":"increment","outputs":[],"stateMutability":"nonpayable","type":"function"}];
@@ -21,93 +19,47 @@ createAppKit({
   projectId: WALLETCONNECT_PROJECT_ID,
 });
 
-// Main component for our entire application
+
 function FheDapp() {
   const { open, disconnect } = useAppKit();
   const { address, isConnected, chainId } = useAppKitAccount();
   const { walletProvider } = useAppKitProvider("eip155");
 
   const [deployedAddress, setDeployedAddress] = useState(null);
-  const [contract, setContract] = useState(null);
-  const [count, setCount] = useState(null);
-  const [inputValue, setInputValue] = useState(1);
   const [status, setStatus] = useState('Connect wallet to begin.');
   const [isLoading, setIsLoading] = useState(false);
-  const [fhevmInstance, setFhevmInstance] = useState(null);
-  const [balance, setBalance] = useState('');
 
-  // This effect runs to update the balance
+  // This effect will run ONLY ONCE after deployment to log the FHE instance
   useEffect(() => {
-    if (isConnected && walletProvider && address) {
-      const fetchBalance = async () => {
-        try {
-          const provider = new ethers.providers.Web3Provider(walletProvider);
-          const balanceWei = await provider.getBalance(address);
-          const balanceEth = ethers.utils.formatEther(balanceWei);
-          setBalance(parseFloat(balanceEth).toFixed(4));
-        } catch (error) {
-          console.error("BALANCE FETCH FAILED! Here is the error:", error);
-          setBalance('N/A');
-          setStatus('Could not fetch balance.');
-        }
-      };
-      fetchBalance();
-    } else {
-      setBalance('');
-    }
-  }, [isConnected, walletProvider, address]);
-
-  // This effect initializes FHEVM after deployment
-  useEffect(() => {
-    const initializeFhevm = async () => {
+    const initializeAndLogFhevm = async () => {
       if (deployedAddress && walletProvider) {
-        setStatus('Initializing FHE instance...');
+        setStatus('Debugging FHE Instance...');
         try {
-          // --- FINAL FIX: DYNAMICALLY IMPORT FHEVMJS ---
+          // Dynamically import the library to prevent build crash
           const FHEVM = await import('fhevmjs');
+
           const provider = new ethers.providers.Web3Provider(walletProvider);
           const fhenixPublicKey = await provider.call({ to: "0x0000000000000000000000000000000000000044" });
           
           await FHEVM.initFhevm();
           const instance = FHEVM.createInstance(deployedAddress, fhenixPublicKey, provider);
-          setFhevmInstance(instance);
-          setStatus('FHE instance ready. Fetching count...');
-          
-          const signer = provider.getSigner();
-          const deployedContract = new ethers.Contract(deployedAddress, contractABI, signer);
-          setContract(deployedContract);
-          await updateCount(deployedContract, instance);
 
+          // THE ONLY GOAL IS TO LOG THIS OBJECT
+          console.log("FINAL DEBUG: This is the FHEVM instance object. Please expand it.", instance);
+          
+          setStatus('✅ Debug info logged to console! Expand the object and screenshot.');
         } catch (e) {
-          console.error("Error during FHEVM initialization:", e);
-          setStatus('Error initializing FHE instance.');
+          console.error("Error during final debug:", e);
+          setStatus('Error during debug initialization. Check console.');
         }
       }
     };
-    initializeFhevm();
-  }, [deployedAddress, walletProvider]);
+    initializeAndLogFhevm();
+  }, [deployedAddress, walletProvider]); // This effect depends on these values
 
-  // Function to get and decrypt the current count
-  const updateCount = async (contractToUpdate, instance) => {
-    try {
-      setStatus('Fetching encrypted count...');
-      const encryptedCount = await contractToUpdate.getCount();
-      setStatus('Decrypting count...');
-      const decryptedCount = await instance.decrypt(deployedAddress, encryptedCount);
-      setCount(decryptedCount);
-      setStatus(`Count updated to: ${decryptedCount}`);
-    } catch(e) {
-      console.error("Could not update count:", e);
-      setStatus("Could not retrieve count.");
-      setCount("N/A");
-    }
-  };
 
-  // Function to handle contract deployment
   const handleDeploy = async () => {
-    if (!isConnected || !walletProvider) return open();
-    if (chainId !== sepolia.chainId) return setStatus('Error: Please switch to Sepolia.');
-
+    if (!isConnected) return open();
     setIsLoading(true);
     setStatus('Deploying contract... Please confirm in wallet.');
     try {
@@ -116,99 +68,38 @@ function FheDapp() {
       const factory = new ethers.ContractFactory(contractABI, contractBytecode, signer);
       const deployedContract = await factory.deploy();
       await deployedContract.deployTransaction.wait();
-      setStatus('✅ Contract Deployed! Now initializing FHE...');
-      setDeployedAddress(deployedContract.address);
+      setDeployedAddress(deployedContract.address); // This will trigger the useEffect above
     } catch (e) {
-      handleError(e);
+        console.error(e)
+        setStatus('Deployment failed. See console for details.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Generic function to handle encrypted transactions
-  const handleTransaction = async (operation) => {
-    if (!contract || !fhevmInstance) return setStatus('Contract or FHE instance not ready.');
-    
-    setIsLoading(true);
-    setStatus(`Encrypting value ${inputValue}...`);
-    try {
-      const encryptedValue = await fhevmInstance.encrypt32(inputValue);
-      setStatus(`Sending ${operation} transaction... Please confirm in wallet.`);
-      
-      const tx = await contract[operation](encryptedValue);
-      setStatus('Mining transaction...');
-      await tx.wait();
-      
-      setStatus('Transaction successful! Updating count...');
-      await updateCount(contract, fhevmInstance);
-
-    } catch(e) {
-      handleError(e);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleError = (error) => {
-    console.error(error);
-    if (error.code === 'ACTION_REJECTED' || error.code === 4001) {
-      setStatus('❌ Transaction Rejected by User');
-    } else {
-      setStatus(`An unexpected error occurred.`);
-    }
-  };
-  
-  const getButtonState = () => {
-    if (!isConnected) return { text: 'Connect Wallet', disabled: false };
-    if (isLoading) return { text: 'Working...', disabled: true };
-    if (!walletProvider) return { text: 'Initializing...', disabled: true };
-    return { text: 'Deploy Contract', disabled: false };
-  };
-
-  const buttonState = getButtonState();
-  
   return (
     <div className="container">
       {isConnected && (
         <div className="walletInfo">
-          <div className="walletAddress">{address ? `${address.substring(0, 6)}...${address.substring(38)}` : ''} <span>({balance} Sepolia ETH)</span></div>
+          <div className="walletAddress">{address ? `${address.substring(0, 6)}...${address.substring(38)}` : ''}</div>
           <button onClick={() => disconnect()} className="disconnectButton">Disconnect</button>
         </div>
       )}
       
       <h1>ZAMA FHE Contract Deployer</h1>
 
-      {!isConnected ? (
+      { !deployedAddress ?
         <>
-          <p>Connect your wallet to start.</p>
-          <button onClick={() => open()}>Connect Wallet</button>
-        </>
-      ) : !deployedAddress ? (
-        <>
-          <p>Launch your confidential smart contract on the Sepolia Testnet.</p>
-          <button onClick={handleDeploy} disabled={buttonState.disabled}>{buttonState.text}</button>
-        </>
-      ) : (
-        <>
-          <div className="count-display">
-            Current Confidential Count: <span>{count === null ? 'Loading...' : count}</span>
-          </div>
-          <div className="interaction-box">
-            <input 
-              type="number" 
-              value={inputValue} 
-              onChange={(e) => setInputValue(parseInt(e.target.value, 10) || 0)}
-              min="1"
-            />
-            <button onClick={() => handleTransaction('increment')} disabled={isLoading || count === null}>
-              {isLoading ? '...' : 'Increment'}
+            <p>Launch your confidential smart contract on the Sepolia Testnet.</p>
+            <button onClick={handleDeploy} disabled={isLoading || !isConnected}>
+                {!isConnected ? 'Connect Wallet First' : isLoading ? 'Deploying...' : 'Deploy Contract'}
             </button>
-            <button onClick={() => handleTransaction('decrement')} disabled={isLoading || count === null}>
-              {isLoading ? '...' : 'Decrement'}
-            </button>
-          </div>
         </>
-      )}
+        :
+        <>
+            <p>Contract deployed! Check the developer console for debug info.</p>
+        </>
+      }
       
       <div className="status">{status}</div>
 
@@ -217,16 +108,11 @@ function FheDapp() {
           Deployed Contract: <a href={`https://sepolia.etherscan.io/address/${deployedAddress}`} target="_blank" rel="noopener noreferrer">{deployedAddress}</a>
         </div>
       )}
-
-      <footer className="footer">
-        <p>Created by <a href="https://x.com/0xKangLiu" target="_blank" rel="noopener noreferrer">Alan</a></p>
-        <p className="disclaimer">This tool is an independent project and is not affiliated with the official Zama team.</p>
-      </footer>
     </div>
   );
 }
 
-// The main App component that renders our Deployer
+// The main App component
 export default function App() {
   return (
     <div className="app-container">
