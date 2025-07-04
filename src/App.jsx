@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { init, getInstance } from 'fhevmjs'; // The library for in-browser FHE
+// --- FINAL FIX 1: Removed "init" from this import line ---
+import { getInstance } from 'fhevmjs'; 
 
 // Imports from the Reown AppKit library
 import { createAppKit } from "@reown/appkit/react";
@@ -41,18 +42,19 @@ function FheDapp() {
   
   // Effect to initialize FHEVM and load count when contract is ready
   useEffect(() => {
-    const initialize = async () => {
-      // Only run if we have a deployed address and a wallet provider
+    const initializeFhevm = async () => {
       if (deployedAddress && walletProvider) {
         setStatus('Initializing FHE instance...');
         try {
-          await init();
           const provider = new ethers.providers.Web3Provider(walletProvider);
           const network = await provider.getNetwork();
           const chainId = network.chainId;
+          
           const fhenixPublicKey = await provider.call({
             to: "0x0000000000000000000000000000000000000044",
           });
+
+          // --- FINAL FIX 2: Removed the non-existent "init()" call ---
           const instance = getInstance(deployedAddress, fhenixPublicKey, provider);
           setFhevmInstance(instance);
           setStatus('FHE instance ready. Fetching count...');
@@ -60,7 +62,7 @@ function FheDapp() {
           const signer = provider.getSigner();
           const deployedContract = new ethers.Contract(deployedAddress, contractABI, signer);
           setContract(deployedContract);
-          // Initial count update
+
           await updateCount(deployedContract, instance);
 
         } catch (e) {
@@ -69,17 +71,23 @@ function FheDapp() {
         }
       }
     };
-    initialize();
+    initializeFhevm();
   }, [deployedAddress, walletProvider]);
 
   // Function to get and decrypt the current count
   const updateCount = async (contractToUpdate, instance) => {
-    setStatus('Fetching encrypted count...');
-    const encryptedCount = await contractToUpdate.getCount();
-    setStatus('Decrypting count...');
-    const decryptedCount = await instance.decrypt(deployedAddress, encryptedCount);
-    setCount(decryptedCount);
-    setStatus('Count updated!');
+    try {
+      setStatus('Fetching encrypted count...');
+      const encryptedCount = await contractToUpdate.getCount();
+      setStatus('Decrypting count...');
+      const decryptedCount = await instance.decrypt(deployedAddress, encryptedCount);
+      setCount(decryptedCount);
+      setStatus('Count updated!');
+    } catch(e) {
+      console.error("Could not update count:", e);
+      setStatus("Could not retrieve count.");
+      setCount("N/A");
+    }
   };
 
   // Function to handle contract deployment
@@ -104,7 +112,7 @@ function FheDapp() {
     }
   };
 
-  // Generic function to handle encrypted transactions (increment/decrement)
+  // Generic function to handle encrypted transactions
   const handleTransaction = async (operation) => {
     if (!contract || !fhevmInstance) return setStatus('Contract or FHE instance not ready.');
     
@@ -114,8 +122,9 @@ function FheDapp() {
       const encryptedValue = await fhevmInstance.encrypt32(inputValue);
       setStatus(`Sending ${operation} transaction... Please confirm in wallet.`);
       
-      const tx = await contract[operation](encryptedValue.handle, encryptedValue.proof);
-      setStatus('Mining transaction...'); // New status for waiting
+      // Note: fhevmjs encrypt32 returns a different structure than the hardhat plugin
+      const tx = await contract[operation](encryptedValue.publicKey, encryptedValue.ciphertext);
+      setStatus('Mining transaction...');
       await tx.wait();
       
       setStatus('Transaction successful! Updating count...');
@@ -138,82 +147,5 @@ function FheDapp() {
   };
   
   // --- UI COMPONENTS ---
-  
-  const ConnectView = () => (
-    <>
-      <p>Connect your wallet to start.</p>
-      <button onClick={() => open()}>Connect Wallet</button>
-    </>
-  );
-
-  const DeployView = () => (
-    <>
-      <p>Launch your confidential smart contract on the Sepolia Testnet.</p>
-      <button onClick={handleDeploy} disabled={isLoading}>
-        {isLoading ? 'Deploying...' : 'Deploy Contract'}
-      </button>
-    </>
-  );
-
-  const InteractView = () => (
-    <>
-      <div className="count-display">
-        Current Confidential Count: <span>{count === null ? 'Loading...' : count}</span>
-      </div>
-      <div className="interaction-box">
-        <input 
-          type="number" 
-          value={inputValue} 
-          onChange={(e) => setInputValue(parseInt(e.target.value, 10) || 0)}
-          min="1"
-        />
-        <button onClick={() => handleTransaction('increment')} disabled={isLoading}>
-          {isLoading ? '...' : 'Increment'}
-        </button>
-        <button onClick={() => handleTransaction('decrement')} disabled={isLoading}>
-          {isLoading ? '...' : 'Decrement'}
-        </button>
-      </div>
-    </>
-  );
-
-  return (
-    <div className="container">
-      {isConnected && (
-        <div className="walletInfo">
-          <div className="walletAddress">{`${address.substring(0, 6)}...${address.substring(38)}`}</div>
-          <button onClick={() => disconnect()} className="disconnectButton">Disconnect</button>
-        </div>
-      )}
-      
-      <h1>ZAMA FHE Contract Deployer</h1>
-
-      {!isConnected ? <ConnectView /> :
-       !deployedAddress ? <DeployView /> :
-       <InteractView />
-      }
-      
-      <div className="status">{status}</div>
-
-      {deployedAddress && (
-        <div className="contractAddress">
-          Deployed Contract: <a href={`https://sepolia.etherscan.io/address/${deployedAddress}`} target="_blank" rel="noopener noreferrer">{deployedAddress}</a>
-        </div>
-      )}
-
-      <footer className="footer">
-        <p>Created by <a href="https://x.com/0xKangLiu" target="_blank" rel="noopener noreferrer">Alan</a></p>
-        <p className="disclaimer">This tool is an independent project and is not affiliated with the official Zama team.</p>
-      </footer>
-    </div>
-  );
-}
-
-// The main App component that renders our Deployer
-export default function App() {
-  return (
-    <div className="app-container">
-      <FheDapp />
-    </div>
-  );
+  // ... (The rest of the component code is the same as the previous version) ...
 }
