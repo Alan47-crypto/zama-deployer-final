@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ethers } from 'ethers';
 
+// Imports from the Reown AppKit library
 import { createAppKit } from "@reown/appkit/react";
 import { Ethers5Adapter } from "@reown/appkit-adapter-ethers5";
 import { useAppKit, useAppKitProvider, useAppKitAccount } from '@reown/appkit/react';
@@ -23,7 +24,7 @@ createAppKit({
     url: window.location.href, // Automatically uses your Vercel URL
     icons: ["https://avatars.githubusercontent.com/u/37784886"],
   },
-  networks: [sepolia], // We only need the Sepolia testnet
+  networks: [sepolia],
   projectId: WALLETCONNECT_PROJECT_ID,
 });
 
@@ -31,37 +32,37 @@ createAppKit({
 // This is our main Deployer component
 function Deployer() {
   const { open } = useAppKit();
-  const { address, isConnected, chainId } = useAppKitAccount();
-  const { walletProvider } = useAppKitProvider();
+  const { isConnected, chainId } = useAppKitAccount();
+  
+  // --- THIS IS THE FINAL FIX ---
+  // We specify the chain "eip155" to get the correct provider
+  const { walletProvider } = useAppKitProvider({ chainId: sepolia.chainId });
+  // --- END OF FIX ---
 
   const [status, setStatus] = useState('Connect wallet to begin.');
   const [deployedAddress, setDeployedAddress] = useState('');
   const [isDeploying, setIsDeploying] = useState(false);
 
   const handleDeploy = async () => {
-    // If not connected, the button's only job is to open the modal.
     if (!isConnected) {
       open();
       return;
     }
     
-    // If connected, proceed with deployment logic.
     try {
       setIsDeploying(true);
       setDeployedAddress('');
       setStatus('Checking connection details...');
 
-      // FINAL FIX: Add a check to ensure walletProvider is available.
       if (!walletProvider) {
-        setStatus('Error: Wallet provider not ready. Please try clicking again.');
-        setIsDeploying(false); // Re-enable button
-        return; // Stop if provider is not ready
+        setStatus('Error: Wallet provider not ready. Please wait a moment and click again.');
+        setIsDeploying(false);
+        return;
       }
 
-      // Check if on the correct network
       if (chainId !== sepolia.chainId) {
         setStatus('Error: Please switch to the Sepolia Testnet in your wallet.');
-        setIsDeploying(false); // Re-enable button
+        setIsDeploying(false);
         return;
       }
 
@@ -88,17 +89,24 @@ function Deployer() {
     }
   };
 
+  const getButtonText = () => {
+    if (!isConnected) return 'Connect Wallet';
+    if (isDeploying) return 'Deploying...';
+    // The button is only ready if the provider for the current chain exists
+    if (!walletProvider) return 'Initializing...';
+    return 'Deploy Contract';
+  };
+  
   return (
     <div className="container">
       <h1>FHECounter One-Click Deployer</h1>
       <p>Launch your confidential smart contract on the Sepolia Testnet.</p>
       
-      <button onClick={handleDeploy} disabled={isDeploying || (isConnected && !walletProvider)}>
-        {
-            !isConnected ? 'Connect Wallet' :
-            !walletProvider ? 'Initializing...' :
-            isDeploying ? 'Deploying...' : 'Deploy Contract'
-        }
+      <button 
+        onClick={handleDeploy} 
+        disabled={isDeploying || (isConnected && !walletProvider)}
+      >
+        {getButtonText()}
       </button>
       
       <div className="status">{status}</div>
