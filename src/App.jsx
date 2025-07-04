@@ -34,10 +34,10 @@ function Deployer() {
   const { open } = useAppKit();
   const { isConnected, chainId } = useAppKitAccount();
   
-  // --- THIS IS THE FINAL FIX ---
+  // --- THIS IS THE CORRECTED LINE ---
   // We specify the chain "eip155" to get the correct provider
-  const { walletProvider } = useAppKitProvider({ chainId: sepolia.chainId });
-  // --- END OF FIX ---
+  const { walletProvider } = useAppKitProvider("eip155");
+  // --- END OF CORRECTION ---
 
   const [status, setStatus] = useState('Connect wallet to begin.');
   const [deployedAddress, setDeployedAddress] = useState('');
@@ -55,7 +55,7 @@ function Deployer() {
       setStatus('Checking connection details...');
 
       if (!walletProvider) {
-        setStatus('Error: Wallet provider not ready. Please wait a moment and click again.');
+        setStatus('Error: Wallet provider not ready. Please try clicking again.');
         setIsDeploying(false);
         return;
       }
@@ -89,13 +89,22 @@ function Deployer() {
     }
   };
 
-  const getButtonText = () => {
-    if (!isConnected) return 'Connect Wallet';
-    if (isDeploying) return 'Deploying...';
+  // This function determines the text and disabled state of the button
+  const getButtonState = () => {
+    if (!isConnected) {
+      return { text: 'Connect Wallet', disabled: false };
+    }
+    if (isDeploying) {
+      return { text: 'Deploying...', disabled: true };
+    }
     // The button is only ready if the provider for the current chain exists
-    if (!walletProvider) return 'Initializing...';
-    return 'Deploy Contract';
+    if (!walletProvider) {
+      return { text: 'Initializing...', disabled: true };
+    }
+    return { text: 'Deploy Contract', disabled: false };
   };
+
+  const buttonState = getButtonState();
   
   return (
     <div className="container">
@@ -104,9 +113,9 @@ function Deployer() {
       
       <button 
         onClick={handleDeploy} 
-        disabled={isDeploying || (isConnected && !walletProvider)}
+        disabled={buttonState.disabled}
       >
-        {getButtonText()}
+        {buttonState.text}
       </button>
       
       <div className="status">{status}</div>
