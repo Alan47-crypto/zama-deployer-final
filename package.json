@@ -15,6 +15,7 @@
     "@walletconnect/core": "^2.13.2",
     "@walletconnect/utils": "^2.13.2",
     "ethers": "5.7.2",
+    "fhevmjs": "^0.1.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
