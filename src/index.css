@@ -1,72 +1,59 @@
 /* ==========================================================================
-   Modern UI Stylesheet for ZAMA FHE Contract Deployer
+   ZAMA FHE Contract Deployer - Official Zama Branding
    ========================================================================== */
 
-/* --- 1. Global Styles & Cool Background --- */
-
-/* Using CSS variables makes it easy to change colors later */
+/* --- ZAMA BRANDING UPDATE: New Color Palette --- */
 :root {
-  --background-color: #121212; /* A very dark gray, almost black */
-  --container-bg: rgba(26, 27, 34, 0.75); /* Semi-transparent dark container */
+  --zama-green: #14F195; /* The iconic Zama bright green */
+  --zama-dark-bg: #111111; /* A deep charcoal, not pure black */
+  --zama-container-bg: rgba(28, 28, 30, 0.75); /* Semi-transparent dark container */
   --primary-text: #EAEAEA;
   --secondary-text: #A0A0A0;
-  --accent-gradient: linear-gradient(90deg, #8A2BE2, #4A00E0, #C533FF);
-  --accent-color-1: #8A2BE2; /* BlueViolet */
-  --accent-color-2: #4A00E0; /* A deep purple */
-  --success-color: #28a745;
-  --error-color: #dc3545;
-  --border-color: rgba(255, 255, 255, 0.1);
+  --border-color: rgba(20, 241, 149, 0.2); /* A faint green border */
 }
 
+/* --- Global Styles & New Background --- */
 body { 
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  background-color: var(--background-color); 
+  background-color: var(--zama-dark-bg); 
   color: var(--primary-text); 
   display: flex; 
   justify-content: center; 
   align-items: center; 
   height: 100vh; 
   margin: 0;
-  overflow: hidden; /* Hide scrollbars from the background effect */
+  overflow: hidden;
 }
 
-/* This creates the moving "aurora" background effect */
+/* This creates a more subtle background glow with the Zama green */
 body::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at 20% 20%, var(--accent-color-2) 0%, transparent 25%),
-              radial-gradient(circle at 80% 70%, var(--accent-color-1) 0%, transparent 25%);
-  filter: blur(100px);
+  top: 50%;
+  left: 50%;
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(20, 241, 149, 0.15) 0%, transparent 70%);
+  transform: translate(-50%, -50%);
   z-index: -1;
-  animation: move-aurora 20s infinite alternate;
+  animation: pulse-glow 10s infinite alternate;
 }
 
-/* --- 2. Keyframe Animations (for glowing effect) --- */
-
-@keyframes move-aurora {
+/* --- Keyframe Animations --- */
+@keyframes pulse-glow {
   from {
-    transform: rotate(0deg) scale(1.2);
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(0.8);
   }
   to {
-    transform: rotate(360deg) scale(1.5);
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
   }
 }
 
-@keyframes button-glow {
-  0% { box-shadow: 0 0 5px var(--accent-color-1), 0 0 10px var(--accent-color-1); }
-  50% { box-shadow: 0 0 20px var(--accent-color-2), 0 0 30px var(--accent-color-2); }
-  100% { box-shadow: 0 0 5px var(--accent-color-1), 0 0 10px var(--accent-color-1); }
-}
-
-
-/* --- 3. Main App Container --- */
-
+/* --- Main App Container --- */
 .container { 
-  background: var(--container-bg); 
+  background: var(--zama-container-bg); 
   padding: 2.5rem; 
   border-radius: 16px; 
   box-shadow: 0 8px 32px rgba(0,0,0,0.3); 
@@ -74,19 +61,16 @@ body::before {
   max-width: 500px;
   width: 90%;
   border: 1px solid var(--border-color);
-  backdrop-filter: blur(10px); /* This creates the "glass" effect */
+  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
-/* --- 4. Typography (Headers, Paragraphs) --- */
-
+/* --- ZAMA BRANDING UPDATE: Title color --- */
 h1 {
   font-size: 2rem;
   font-weight: 700;
   margin-bottom: 0.75rem;
-  background: var(--accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--zama-green); /* Changed from gradient to solid Zama green */
 }
 
 p {
@@ -95,12 +79,10 @@ p {
   line-height: 1.6;
 }
 
-/* --- 5. The Main Button --- */
-
+/* --- ZAMA BRANDING UPDATE: Button styles --- */
 button { 
-  background: var(--accent-gradient);
-  background-size: 200% 100%;
-  color: white; 
+  background-color: var(--zama-green);
+  color: #111; /* Dark text for high contrast on the bright button */
   border: none; 
   padding: 16px 24px; 
   border-radius: 8px; 
@@ -108,15 +90,15 @@ button {
   font-weight: bold;
   cursor: pointer; 
   margin-top: 1rem; 
-  transition: all 0.4s ease-in-out;
+  transition: all 0.2s ease-in-out;
   width: 100%;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 button:not(:disabled):hover { 
-  background-position: 100% 0;
+  background-color: #FFFFFF; /* White on hover for a sharp effect */
+  color: #111;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px rgba(20, 241, 149, 0.4);
 }
 
 button:disabled { 
@@ -125,8 +107,7 @@ button:disabled {
   cursor: not-allowed; 
 }
 
-/* --- 6. Status & Result Sections --- */
-
+/* --- Status & Result Sections --- */
 .status { 
   margin-top: 1.5rem; 
   font-weight: 500;
@@ -146,17 +127,17 @@ button:disabled {
   border: 1px solid var(--border-color);
 }
 
-.contractAddress a { 
-  color: var(--accent-color-1);
+/* --- ZAMA BRANDING UPDATE: Link color --- */
+.contractAddress a, .footer a { 
+  color: var(--zama-green);
   font-weight: 500;
   text-decoration: none;
 }
-.contractAddress a:hover {
+.contractAddress a:hover, .footer a:hover {
   text-decoration: underline;
 }
 
-/* --- 7. Header & Footer --- */
-
+/* --- Header & Footer --- */
 .walletInfo {
   display: flex;
   justify-content: space-between;
@@ -206,16 +187,6 @@ button:disabled {
   margin: 0;
   padding: 0;
   line-height: 1.5;
-}
-
-.footer a {
-  color: var(--accent-color-1);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.footer a:hover {
-  text-decoration: underline;
 }
 
 .disclaimer {
