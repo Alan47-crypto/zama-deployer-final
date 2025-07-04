@@ -118,6 +118,12 @@ button:disabled {
   color: #606770;
 }
 
+.footer p {
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+}
+
 .footer a {
   color: #1877f2;
   text-decoration: none;
@@ -126,4 +132,12 @@ button:disabled {
 
 .footer a:hover {
   text-decoration: underline;
+}
+
+/* --- ADDED: Disclaimer Style --- */
+.disclaimer {
+  margin-top: 8px !important;
+  font-size: 0.75rem !important;
+  font-style: italic;
+  color: #8a919c !important;
 }
