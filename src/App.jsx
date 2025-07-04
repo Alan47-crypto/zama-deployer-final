@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { ethers } from 'ethers';
 
-// Imports from the Reown AppKit library
 import { createAppKit } from "@reown/appkit/react";
 import { Ethers5Adapter } from "@reown/appkit-adapter-ethers5";
 import { useAppKit, useAppKitProvider, useAppKitAccount } from '@reown/appkit/react';
@@ -55,7 +54,7 @@ function Deployer() {
       // FINAL FIX: Add a check to ensure walletProvider is available.
       if (!walletProvider) {
         setStatus('Error: Wallet provider not ready. Please try clicking again.');
-        setIsDeploying(false);
+        setIsDeploying(false); // Re-enable button
         return; // Stop if provider is not ready
       }
 
@@ -94,8 +93,12 @@ function Deployer() {
       <h1>FHECounter One-Click Deployer</h1>
       <p>Launch your confidential smart contract on the Sepolia Testnet.</p>
       
-      <button onClick={handleDeploy} disabled={isDeploying}>
-        {!isConnected ? 'Connect Wallet' : isDeploying ? 'Deploying...' : 'Deploy Contract'}
+      <button onClick={handleDeploy} disabled={isDeploying || (isConnected && !walletProvider)}>
+        {
+            !isConnected ? 'Connect Wallet' :
+            !walletProvider ? 'Initializing...' :
+            isDeploying ? 'Deploying...' : 'Deploy Contract'
+        }
       </button>
       
       <div className="status">{status}</div>
