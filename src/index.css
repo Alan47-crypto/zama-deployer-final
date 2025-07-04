@@ -1,24 +1,24 @@
 /* ==========================================================================
-   ZAMA FHE Contract Deployer - Corrected Zama Branding + Animations
+   ZAMA FHE Contract Deployer - Final Polished Version
    ========================================================================== */
 
-/* --- CORRECTED ZAMA BRANDING: New Color Palette --- */
+/* --- ZAMA BRANDING: Color Palette --- */
 :root {
-  --zama-yellow: #FFDA63; /* The primary Zama yellow */
+  --zama-yellow: #FFDA63; 
   --zama-black: #000000;
   --zama-white: #FFFFFF;
-  --zama-container-bg: rgba(0, 0, 0, 0.8); /* Dark, semi-transparent container */
+  --zama-container-bg: rgba(0, 0, 0, 0.8); 
   --primary-text: var(--zama-white);
   --secondary-text: #CCCCCC;
-  --accent-color-1: #FFEA9E; /* A lighter shade of Zama yellow for glow */
-  --accent-color-2: #B3A144; /* A darker shade of Zama yellow for glow */
-  --border-color: rgba(255, 218, 99, 0.2); /* A faint yellow border */
+  --accent-color-1: #FFEA9E; 
+  --accent-color-2: #B3A144; 
+  --border-color: rgba(255, 218, 99, 0.2);
 }
 
-/* --- Global Styles & Cool Background Animation (Re-introduced) --- */
+/* --- Global Styles & Background Animation --- */
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  background-color: var(--zama-yellow); /* Solid Zama yellow background */
+  background-color: var(--zama-yellow);
   color: var(--primary-text);
   display: flex;
   justify-content: center;
@@ -39,10 +39,10 @@ body::before {
               radial-gradient(circle at 80% 70%, var(--accent-color-1) 0%, transparent 25%);
   filter: blur(100px);
   z-index: -1;
-  animation: move-aurora 15s infinite alternate; /* Adjusted speed */
+  animation: move-aurora 15s infinite alternate;
 }
 
-/* --- Keyframe Animations (Re-introduced) --- */
+/* --- Keyframe Animations --- */
 @keyframes move-aurora {
   from {
     transform: rotate(0deg) scale(1.1);
@@ -72,12 +72,15 @@ body::before {
   -webkit-backdrop-filter: blur(12px);
 }
 
-/* --- CORRECTED ZAMA BRANDING: Title color --- */
+/* --- FINAL FIX: Title Style --- */
 h1 {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 2.2rem;
+  font-weight: 800;
   margin-bottom: 0.75rem;
-  color: var(--zama-black); /* Black title for contrast on yellow background */
+  color: var(--zama-white); /* White for high contrast */
+  letter-spacing: -1px;
+  /* Adds the cool yellow glow effect */
+  text-shadow: 0 0 12px rgba(255, 218, 99, 0.6); 
 }
 
 p {
@@ -86,11 +89,11 @@ p {
   line-height: 1.6;
 }
 
-/* --- CORRECTED ZAMA BRANDING: Button styles with glow --- */
+/* --- Button Styles --- */
 button {
   background-color: var(--zama-black);
-  color: var(--zama-yellow); /* Yellow text on black button */
-  border: 2px solid var(--zama-yellow); /* Yellow border */
+  color: var(--zama-yellow);
+  border: 2px solid var(--zama-yellow);
   padding: 16px 24px;
   border-radius: 8px;
   font-size: 18px;
@@ -99,7 +102,7 @@ button {
   margin-top: 1rem;
   transition: all 0.2s ease-in-out;
   width: 100%;
-  animation: button-glow 2s infinite alternate; /* Apply the glow animation */
+  animation: button-glow 2s infinite alternate;
 }
 
 button:not(:disabled):hover {
@@ -114,7 +117,7 @@ button:disabled {
   color: #888;
   border-color: #666;
   cursor: not-allowed;
-  animation: none; /* Disable glow when disabled */
+  animation: none;
 }
 
 /* --- Status & Result Sections --- */
@@ -137,7 +140,6 @@ button:disabled {
   border: 1px solid var(--border-color);
 }
 
-/* --- CORRECTED ZAMA BRANDING: Link color --- */
 .contractAddress a, .footer a {
   color: var(--zama-yellow);
   font-weight: 500;
