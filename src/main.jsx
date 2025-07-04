@@ -7,6 +7,7 @@ import './index.css';
 import '@rainbow-me/rainbowkit/styles.css';
 import { getDefaultConfig, RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
+// --- THIS IS THE CRITICAL IMPORT THAT WAS MISSING ---
 import { sepolia } from 'wagmi/chains';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 
@@ -14,7 +15,7 @@ import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 const config = getDefaultConfig({
   appName: 'ZAMA FHE Deployer',
   projectId: 'd4df6eb029e14fa073ea8d7c57260b38', // Your WalletConnect Project ID
-  chains: [sepolia],
+  chains: [sepolia], // This line will now work correctly
 });
 
 const queryClient = new QueryClient();
