@@ -1,5 +1,5 @@
 /* ==========================================================================
-   ZAMA FHE Contract Deployer - Final Polished Version
+   ZAMA FHE Contract Deployer - Final Zama Branding + Animations
    ========================================================================== */
 
 /* --- ZAMA BRANDING: Color Palette --- */
@@ -72,7 +72,7 @@ body::before {
   -webkit-backdrop-filter: blur(12px);
 }
 
-/* --- FINAL FIX: Title Style --- */
+/* --- Title Style --- */
 h1 {
   font-size: 2.2rem;
   font-weight: 800;
@@ -206,4 +206,48 @@ button:disabled {
   font-size: 0.8rem !important;
   font-style: italic;
   color: #999;
+}
+
+/* --- ADDED FOR INTERACTION UI --- */
+.count-display {
+  background-color: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin: 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--secondary-text);
+}
+
+.count-display span {
+  color: var(--zama-white);
+  font-weight: 700;
+  margin-left: 0.5rem;
+  font-size: 2rem;
+  vertical-align: middle;
+}
+
+.interaction-box {
+  display: flex;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.interaction-box input {
+  flex-grow: 1;
+  padding: 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: rgba(0, 0, 0, 0.3);
+  color: var(--zama-white);
+  font-size: 18px;
+  text-align: center;
+  font-weight: bold;
+  width: 50px; /* give it a base width */
+}
+
+.interaction-box button {
+  width: 100%;
+  margin-top: 0;
 }
