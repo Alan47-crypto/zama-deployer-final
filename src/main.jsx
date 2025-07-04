@@ -7,15 +7,27 @@ import './index.css';
 import '@rainbow-me/rainbowkit/styles.css';
 import { getDefaultConfig, RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
-// --- THIS IS THE CRITICAL IMPORT THAT WAS MISSING ---
-import { sepolia } from 'wagmi/chains';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
+
+// --- FINAL FIX: Manually define the Sepolia chain object ---
+// This removes the problematic import that was failing on Vercel.
+const sepolia = {
+  id: 11155111,
+  name: 'Sepolia',
+  nativeCurrency: { name: 'Sepolia Ether', symbol: 'ETH', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://rpc.sepolia.org'] },
+  },
+  blockExplorers: {
+    default: { name: 'Etherscan', url: 'https://sepolia.etherscan.io' },
+  },
+};
 
 // 1. Configure chains and project ID
 const config = getDefaultConfig({
   appName: 'ZAMA FHE Deployer',
-  projectId: 'd4df6eb029e14fa073ea8d7c57260b38', // Your WalletConnect Project ID
-  chains: [sepolia], // This line will now work correctly
+  projectId: 'd4df6eb029e14fa073ea8d7c57260b38',
+  chains: [sepolia], // This now uses our manually defined object
 });
 
 const queryClient = new QueryClient();
