@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 
 // Imports from the Reown AppKit library
@@ -19,29 +19,49 @@ const contractBytecode = '0x608060405234801561000f575f80fd5b5061018a6100ae604080
 createAppKit({
   adapters: [new Ethers5Adapter()],
   metadata: {
-    name: "FHECounter Deployer",
+    name: "ZAMA FHE Contract Deployer",
     description: "One-Click Deployer",
-    url: window.location.href, // Automatically uses your Vercel URL
+    url: window.location.href,
     icons: ["https://avatars.githubusercontent.com/u/37784886"],
   },
   networks: [sepolia],
   projectId: WALLETCONNECT_PROJECT_ID,
 });
 
-
 // This is our main Deployer component
 function Deployer() {
-  const { open } = useAppKit();
-  const { isConnected, chainId } = useAppKitAccount();
-  
-  // --- THIS IS THE CORRECTED LINE ---
-  // We specify the chain "eip155" to get the correct provider
+  const { open, disconnect } = useAppKit();
+  const { address, isConnected, chainId } = useAppKitAccount();
   const { walletProvider } = useAppKitProvider("eip155");
-  // --- END OF CORRECTION ---
 
-  const [status, setStatus] = useState('Connect wallet to begin.');
+  const [status, setStatus] = useState('');
   const [deployedAddress, setDeployedAddress] = useState('');
   const [isDeploying, setIsDeploying] = useState(false);
+  const [balance, setBalance] = useState('');
+
+  // This effect runs when the connection status or provider changes
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (isConnected && walletProvider) {
+        try {
+          const provider = new ethers.providers.Web3Provider(walletProvider);
+          const balanceWei = await provider.getBalance(address);
+          const balanceEth = ethers.utils.formatEther(balanceWei);
+          setBalance(parseFloat(balanceEth).toFixed(4)); // Format to 4 decimal places
+          setStatus('Ready to deploy.');
+        } catch (error) {
+          console.error("Failed to fetch balance:", error);
+          setBalance('');
+        }
+      } else {
+        setBalance('');
+        setStatus('Connect wallet to begin.');
+      }
+    };
+
+    fetchBalance();
+  }, [isConnected, walletProvider, address]);
+
 
   const handleDeploy = async () => {
     if (!isConnected) {
@@ -55,7 +75,7 @@ function Deployer() {
       setStatus('Checking connection details...');
 
       if (!walletProvider) {
-        setStatus('Error: Wallet provider not ready. Please try clicking again.');
+        setStatus('Error: Wallet provider not ready. Please wait a moment and click again.');
         setIsDeploying(false);
         return;
       }
@@ -73,7 +93,7 @@ function Deployer() {
 
       const factory = new ethers.ContractFactory(contractABI, contractBytecode, signer);
       
-      setStatus('Deploying contract... This may take a minute.');
+      setStatus('Deploying contract... Please confirm in your wallet.');
       const contract = await factory.deploy();
       
       await contract.deployTransaction.wait();
@@ -83,39 +103,33 @@ function Deployer() {
       
     } catch (error) {
       console.error(error);
-      setStatus(`Error: ${error.message}`);
+      if (error.code === 4001 || error.message?.includes('User rejected')) {
+        setStatus('Transaction rejected by user.');
+      } else {
+        setStatus(`Error: ${error.message}`);
+      }
     } finally {
       setIsDeploying(false);
     }
   };
-
-  // This function determines the text and disabled state of the button
-  const getButtonState = () => {
-    if (!isConnected) {
-      return { text: 'Connect Wallet', disabled: false };
-    }
-    if (isDeploying) {
-      return { text: 'Deploying...', disabled: true };
-    }
-    // The button is only ready if the provider for the current chain exists
-    if (!walletProvider) {
-      return { text: 'Initializing...', disabled: true };
-    }
-    return { text: 'Deploy Contract', disabled: false };
-  };
-
-  const buttonState = getButtonState();
   
   return (
     <div className="container">
-      <h1>FHECounter One-Click Deployer</h1>
+      {isConnected && (
+        <div className="walletInfo">
+          <div className="walletAddress">
+            {`${address.substring(0, 6)}...${address.substring(38)}`}
+            <span>({balance} Sepolia ETH)</span>
+          </div>
+          <button onClick={() => disconnect()} className="disconnectButton">Disconnect</button>
+        </div>
+      )}
+
+      <h1>ZAMA FHE Contract Deployer</h1>
       <p>Launch your confidential smart contract on the Sepolia Testnet.</p>
       
-      <button 
-        onClick={handleDeploy} 
-        disabled={buttonState.disabled}
-      >
-        {buttonState.text}
+      <button onClick={handleDeploy} disabled={isDeploying || (isConnected && !walletProvider)}>
+        {!isConnected ? 'Connect Wallet' : isDeploying ? 'Deploying...' : 'Deploy Contract'}
       </button>
       
       <div className="status">{status}</div>
@@ -125,6 +139,10 @@ function Deployer() {
           Contract Address: <a href={`https://sepolia.etherscan.io/address/${deployedAddress}`} target="_blank" rel="noopener noreferrer">{deployedAddress}</a>
         </div>
       )}
+
+      <footer className="footer">
+        Created by <a href="https://x.com/0xKangLiu" target="_blank" rel="noopener noreferrer">Alan</a>
+      </footer>
     </div>
   );
 }
