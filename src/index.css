@@ -183,3 +183,10 @@ button:disabled {
   width: 100%;
   margin-top: 0;
 }
+
+/* --- FINAL POLISH: Style the connect button's container --- */
+.header > div {
+    /* This targets the div RainbowKit places its button in */
+    /* It removes any default margin and ensures vertical alignment */
+    line-height: 1 !important;
+}
