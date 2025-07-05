@@ -4,27 +4,12 @@ import { initFhevm, createInstance } from 'fhevmjs';
 
 // RainbowKit and Wagmi Hooks
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useAccount, useWalletClient } from 'wagmi';
-import { sepolia } from 'wagmi/chains';
+import { useAccount } from 'wagmi';
 
-// This function converts a wagmi Client to an ethers.js Signer
-function walletClientToSigner(walletClient) {
-  const { account, chain, transport } = walletClient;
-  const network = {
-    chainId: chain.id,
-    name: chain.name,
-    ensAddress: chain.contracts?.ensRegistry?.address,
-  };
-  const provider = new ethers.providers.Web3Provider(transport, network);
-  const signer = provider.getSigner(account.address);
-  return signer;
-}
-
-// Main Application Component
+// This is the main Application Component
 export default function App() {
   // Get state from wagmi hooks
   const { address, isConnected, chain } = useAccount();
-  const { data: walletClient } = useWalletClient({ chainId: sepolia.id });
 
   // Application-specific state
   const [deployedAddress, setDeployedAddress] = useState(null);
@@ -34,15 +19,25 @@ export default function App() {
   const [status, setStatus] = useState('Please connect your wallet to begin.');
   const [isLoading, setIsLoading] = useState(false);
   const [fhevmInstance, setFhevmInstance] = useState(null);
+  const [balance, setBalance] = useState('');
+
+  // This function converts a wagmi Client to an ethers.js Signer
+  // We need this to get the provider from the connected wallet
+  const getSigner = async () => {
+    if (!window.ethereum) throw new Error("No wallet found!");
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
+    return signer;
+  }
 
   // This effect initializes FHEVM after deployment
   useEffect(() => {
     const initializeFhevm = async () => {
-      if (deployedAddress && walletClient) {
+      if (deployedAddress && isConnected) {
         setStatus('Initializing FHE instance...');
         try {
-          const signer = walletClientToSigner(walletClient);
-          const provider = signer.provider;
+          // --- FINAL FIX: Use the direct window.ethereum provider ---
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
           const fhenixPublicKey = await provider.call({ to: "0x0000000000000000000000000000000000000044" });
 
           await initFhevm();
@@ -50,6 +45,7 @@ export default function App() {
           setFhevmInstance(instance);
 
           setStatus('FHE instance ready. Fetching initial count...');
+          const signer = provider.getSigner();
           const deployedContract = new ethers.Contract(deployedAddress, contractABI, signer);
           setContract(deployedContract);
           await updateCount(deployedContract, instance);
@@ -60,7 +56,24 @@ export default function App() {
       }
     };
     initializeFhevm();
-  }, [deployedAddress, walletClient]);
+  }, [deployedAddress, isConnected]);
+
+  // This effect fetches wallet balance when connection status changes
+  useEffect(() => {
+    if (isConnected && address) {
+      const fetchBalance = async () => {
+        try {
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+          const balanceWei = await provider.getBalance(address);
+          setBalance(parseFloat(ethers.utils.formatEther(balanceWei)).toFixed(4));
+        } catch (error) {
+          console.error("Balance fetch failed:", error);
+          setBalance('N/A');
+        }
+      };
+      fetchBalance();
+    }
+  }, [isConnected, address]);
 
   // Function to get and decrypt the current count
   const updateCount = async (contractToUpdate, instance) => {
@@ -80,18 +93,15 @@ export default function App() {
 
   // Function to handle contract deployment
   const handleDeploy = async () => {
-    if (!walletClient) {
-      setStatus('Please connect your wallet first.');
-      return;
-    };
-    if (chain?.id !== sepolia.id) {
+    if (!isConnected) return open();
+    if (chain?.id !== 11155111) {
         setStatus('Error: Please switch to Sepolia Testnet in your wallet.');
         return;
     }
     setIsLoading(true);
     setStatus('Deploying contract... Please confirm in wallet.');
     try {
-      const signer = walletClientToSigner(walletClient);
+      const signer = await getSigner();
       const factory = new ethers.ContractFactory(contractABI, contractBytecode, signer);
       const deployedContract = await factory.deploy();
       await deployedContract.deployTransaction.wait();
@@ -147,7 +157,6 @@ export default function App() {
         </div>
       );
     }
-    // Interaction View
     return (
       <div className="interact-view">
         <div className="count-display">
@@ -160,11 +169,11 @@ export default function App() {
             onChange={(e) => setInputValue(parseInt(e.target.value, 10) || 1)}
             min="1"
           />
-          <button onClick={() => handleTransaction('increment')} disabled={isLoading || count === null}>
-            {isLoading ? 'Processing...' : 'Increment'}
+          <button onClick={() => handleTransaction('increment')} disabled={isLoading || count === null} className="interact-button">
+            {isLoading ? '...' : 'Increment'}
           </button>
-          <button onClick={() => handleTransaction('decrement')} disabled={isLoading || count === null}>
-            {isLoading ? 'Processing...' : 'Decrement'}
+          <button onClick={() => handleTransaction('decrement')} disabled={isLoading || count === null} className="interact-button">
+            {isLoading ? '...' : 'Decrement'}
           </button>
         </div>
       </div>
@@ -176,19 +185,15 @@ export default function App() {
       <div className="container">
         <div className="header">
           <h1 className="title">ZAMA FHE Contract Deployer</h1>
-          <ConnectButton />
+          <ConnectButton showBalance={false} />
         </div>
-
         {renderContent()}
-
         <div className="status">{status}</div>
-
         {deployedAddress && (
           <div className="contractAddress">
             Deployed Contract: <a href={`https://sepolia.etherscan.io/address/${deployedAddress}`} target="_blank" rel="noopener noreferrer">{deployedAddress}</a>
           </div>
         )}
-
         <footer className="footer">
           <p>Created by <a href="https://x.com/0xKangLiu" target="_blank" rel="noopener noreferrer">Alan</a></p>
           <p className="disclaimer">This tool is an independent project and is not affiliated with the official Zama team.</p>
