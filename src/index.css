@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Final Polished Stylesheet - Robust Centering
+   Final Polished Stylesheet - With Button Shine Animation
    ========================================================================== */
 
 :root {
@@ -10,6 +10,7 @@
   --primary-text: var(--zama-white);
   --secondary-text: #CCCCCC;
   --border-color: rgba(255, 218, 99, 0.25);
+  --success-color: #33ff99; /* A bright green for success messages */
 }
 
 body { 
@@ -18,7 +19,6 @@ body {
   margin: 0;
 }
 
-/* NEW: A main app wrapper for centering */
 .app-wrapper {
   display: flex;
   justify-content: center;
@@ -82,6 +82,7 @@ button:not(:disabled):hover {
   background-color: var(--zama-yellow);
   color: var(--zama-black);
   transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(255, 218, 99, 0.6);
 }
 
 button:disabled { 
@@ -89,6 +90,25 @@ button:disabled {
   color: #666;
   border-color: #666;
   cursor: not-allowed;
+  animation: none;
+}
+
+/* ADDED: Keyframe animation for the button shine */
+@keyframes shine {
+    to {
+        background-position: 200% center;
+    }
+}
+
+/* ADDED: Specific style for the deploy button to apply the animation */
+.deploy-view button {
+    background: linear-gradient(to right, var(--zama-yellow) 20%, var(--zama-white) 50%, var(--zama-yellow) 80%);
+    background-size: 200% auto;
+    color: #000;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 4s linear infinite;
 }
 
 .status { 
@@ -98,6 +118,11 @@ button:disabled {
   color: var(--secondary-text);
   font-size: 1rem;
   transition: color 0.3s;
+}
+
+/* ADDED: Specific style for success messages */
+.status-success {
+    color: var(--success-color);
 }
 
 .contractAddress { 
@@ -185,4 +210,5 @@ button:disabled {
 .interaction-box button {
   width: 100%;
   margin-top: 0;
+  animation: none; /* No glow on interaction buttons */
 }
