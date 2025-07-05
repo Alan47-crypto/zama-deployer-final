@@ -1,11 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
-import './index.css';
+import './index.css'; // This line loads all of our beautiful styles
 
 // RainbowKit and Wagmi Imports
 import '@rainbow-me/rainbowkit/styles.css';
-// --- CHANGE 1: Import darkTheme ---
 import { getDefaultConfig, RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
 import { sepolia } from 'wagmi/chains';
@@ -25,10 +24,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        {/* --- CHANGE 2: Apply the custom Zama theme --- */}
         <RainbowKitProvider theme={darkTheme({
           accentColor: '#FFDA63', // Zama yellow
-          accentColorForeground: '#000000', // Black text on buttons
+          accentColorForeground: '#000000', // Black text for buttons
           borderRadius: 'small',
           fontStack: 'system-ui',
         })}>
