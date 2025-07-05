@@ -2,7 +2,6 @@
 
 A simple and beautifully designed one-click web tool to deploy a confidential FHE (Fully Homomorphic Encryption) counter smart contract to the Sepolia testnet.
 
-![App Screenshot](https://i.imgur.com/3nBZmC0.png)
 ### ✨ Features
 
 * **🚀 One-Click Deployment:** Connect your wallet and deploy a fresh `FHECounter` contract to the Sepolia testnet with a single button click.
