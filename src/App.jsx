@@ -34,7 +34,6 @@ export default function App() {
   const [status, setStatus] = useState('Please connect your wallet to begin.');
   const [isLoading, setIsLoading] = useState(false);
   const [fhevmInstance, setFhevmInstance] = useState(null);
-  const [balance, setBalance] = useState('');
 
   // This effect initializes FHEVM after deployment
   useEffect(() => {
@@ -45,7 +44,7 @@ export default function App() {
           const signer = walletClientToSigner(walletClient);
           const provider = signer.provider;
           const fhenixPublicKey = await provider.call({ to: "0x0000000000000000000000000000000000000044" });
-          
+
           await initFhevm();
           const instance = await createInstance(deployedAddress, fhenixPublicKey, provider);
           setFhevmInstance(instance);
@@ -62,24 +61,6 @@ export default function App() {
     };
     initializeFhevm();
   }, [deployedAddress, walletClient]);
-
-  // This effect fetches wallet balance when connection status changes
-  useEffect(() => {
-    if (isConnected && address && walletClient) {
-      const fetchBalance = async () => {
-        try {
-          const signer = walletClientToSigner(walletClient);
-          const provider = signer.provider;
-          const balanceWei = await provider.getBalance(address);
-          setBalance(parseFloat(ethers.utils.formatEther(balanceWei)).toFixed(4));
-        } catch (error) {
-          console.error("Balance fetch failed:", error);
-          setBalance('N/A');
-        }
-      };
-      fetchBalance();
-    }
-  }, [isConnected, address, walletClient]);
 
   // Function to get and decrypt the current count
   const updateCount = async (contractToUpdate, instance) => {
@@ -100,7 +81,7 @@ export default function App() {
   // Function to handle contract deployment
   const handleDeploy = async () => {
     if (!walletClient) {
-      setStatus('Wallet not ready. Please connect first.');
+      setStatus('Please connect your wallet first.');
       return;
     };
     if (chain?.id !== sepolia.id) {
@@ -125,10 +106,9 @@ export default function App() {
 
   // Function to handle increment/decrement transactions
   const handleTransaction = async (operation) => {
-    if (!contract || !fhevmInstance) return setStatus('Contract or FHE instance not ready.');
-    
+    if (!contract || !fhevmInstance) return;
     setIsLoading(true);
-    setStatus(`Encrypting value ${inputValue}...`);
+    setStatus(`Encrypting ${inputValue}...`);
     try {
       const encryptedValue = await fhevmInstance.encrypt32(inputValue);
       setStatus(`Sending ${operation} transaction... Please confirm in wallet.`);
@@ -153,7 +133,6 @@ export default function App() {
     }
   };
 
-  // --- UI Rendering Logic ---
   const renderContent = () => {
     if (!isConnected) {
       return <p>Please connect your wallet to begin.</p>;
@@ -191,7 +170,7 @@ export default function App() {
       </div>
     );
   };
-  
+
   return (
     <div className="app-wrapper">
       <div className="container">
@@ -199,9 +178,9 @@ export default function App() {
           <h1 className="title">ZAMA FHE Contract Deployer</h1>
           <ConnectButton />
         </div>
-        
+
         {renderContent()}
-        
+
         <div className="status">{status}</div>
 
         {deployedAddress && (
