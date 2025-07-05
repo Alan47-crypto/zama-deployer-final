@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { initFhevm, createInstance } from 'fhevmjs';
 
 // RainbowKit and Wagmi Hooks
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useAccount, useWalletClient, useDisconnect } from 'wagmi';
+import { useAccount, useWalletClient } from 'wagmi';
 import { sepolia } from 'wagmi/chains';
 
 // This function converts a wagmi Client to an ethers.js Signer
@@ -25,84 +24,26 @@ export default function App() {
   // Get state from wagmi hooks
   const { address, isConnected, chain } = useAccount();
   const { data: walletClient } = useWalletClient({ chainId: sepolia.id });
-  const { disconnect } = useDisconnect();
 
-  // Application-specific state
+  // Simplified state for deployment only
   const [deployedAddress, setDeployedAddress] = useState(null);
-  const [contract, setContract] = useState(null);
-  const [count, setCount] = useState(null);
-  const [inputValue, setInputValue] = useState(1);
-  const [status, setStatus] = useState('Please connect your wallet to begin.');
+  const [status, setStatus] = useState('Please connect your wallet to deploy.');
   const [isLoading, setIsLoading] = useState(false);
-  const [fhevmInstance, setFhevmInstance] = useState(null);
-  const [balance, setBalance] = useState('');
 
-  // This effect initializes FHEVM after deployment
-  useEffect(() => {
-    const initializeFhevm = async () => {
-      if (deployedAddress && walletClient) {
-        setStatus('Initializing FHE instance...');
-        try {
-          const signer = walletClientToSigner(walletClient);
-          const provider = signer.provider;
-          const fhenixPublicKey = await provider.call({ to: "0x0000000000000000000000000000000000000044" });
-          
-          await initFhevm();
-          const instance = await createInstance(deployedAddress, fhenixPublicKey, provider);
-          setFhevmInstance(instance);
-
-          setStatus('FHE instance ready. Fetching initial count...');
-          const deployedContract = new ethers.Contract(deployedAddress, contractABI, signer);
-          setContract(deployedContract);
-          await updateCount(deployedContract, instance);
-        } catch (e) {
-          console.error("Error during FHEVM initialization:", e);
-          setStatus('Error initializing FHE instance.');
-        }
-      }
-    };
-    initializeFhevm();
-  }, [deployedAddress, walletClient]);
-
-  // This effect fetches wallet balance when connection status changes
-  useEffect(() => {
-    if (isConnected && address && walletClient) {
-      const fetchBalance = async () => {
-        try {
-          const signer = walletClientToSigner(walletClient);
-          const provider = signer.provider;
-          const balanceWei = await provider.getBalance(address);
-          setBalance(parseFloat(ethers.utils.formatEther(balanceWei)).toFixed(4));
-        } catch (error) {
-          console.error("Balance fetch failed:", error);
-          setBalance('N/A');
-        }
-      };
-      fetchBalance();
-    }
-  }, [isConnected, address, walletClient]);
-
-  // Function to get and decrypt the current count
-  const updateCount = async (contractToUpdate, instance) => {
-    try {
-      setStatus('Fetching encrypted count...');
-      const encryptedCount = await contractToUpdate.getCount();
-      setStatus('Decrypting count...');
-      const decrypted = await instance.decrypt(deployedAddress, encryptedCount);
-      setCount(decrypted);
-      setStatus(`Count updated to: ${decrypted}`);
-    } catch(e) {
-      console.error("Could not update count:", e);
-      setStatus("Error: Could not retrieve count.");
-      setCount("N/A");
+  const handleError = (error) => {
+    console.error(error);
+    if (error.code === 4001 || error.message?.includes('User rejected')) {
+      setStatus('❌ Transaction Rejected by User');
+    } else {
+      setStatus(`An unexpected error occurred.`);
     }
   };
 
   // Function to handle contract deployment
   const handleDeploy = async () => {
     if (!walletClient) {
-        alert("Please connect your wallet first.");
-        return;
+      alert('Please connect your wallet first.');
+      return;
     }
     if (chain?.id !== sepolia.id) {
         setStatus('Error: Please switch to Sepolia Testnet in your wallet.');
@@ -115,7 +56,7 @@ export default function App() {
       const factory = new ethers.ContractFactory(contractABI, contractBytecode, signer);
       const deployedContract = await factory.deploy();
       await deployedContract.deployTransaction.wait();
-      setStatus('✅ Contract Deployed! Initializing FHE...');
+      setStatus('✅ Contract Deployed Successfully!');
       setDeployedAddress(deployedContract.address);
     } catch (e) {
       handleError(e);
@@ -124,82 +65,22 @@ export default function App() {
     }
   };
 
-  // Function to handle increment/decrement transactions
-  const handleTransaction = async (operation) => {
-    if (!contract || !fhevmInstance) return;
-    setIsLoading(true);
-    setStatus(`Encrypting ${inputValue}...`);
-    try {
-      const encryptedValue = await fhevmInstance.encrypt32(inputValue);
-      setStatus(`Sending ${operation} transaction... Please confirm in wallet.`);
-      const tx = await contract[operation](encryptedValue.publicKey, encryptedValue.ciphertext);
-      setStatus('Mining transaction...');
-      await tx.wait();
-      setStatus('Transaction successful! Updating count...');
-      await updateCount(contract, fhevmInstance);
-    } catch(e) {
-      handleError(e);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleError = (error) => {
-    console.error(error);
-    if (error.code === 4001 || error.message?.includes('User rejected')) {
-      setStatus('❌ Transaction Rejected by User');
-    } else {
-      setStatus(`An unexpected error occurred.`);
-    }
-  };
-  
-  const renderContent = () => {
-    if (!isConnected) {
-      return <p>Please connect your wallet to begin.</p>;
-    }
-    if (!deployedAddress) {
-      return (
-        <div className="deploy-view">
-          <p>Launch your confidential smart contract on the Sepolia Testnet.</p>
-          <button onClick={handleDeploy} disabled={isLoading}>
-            {isLoading ? 'Deploying...' : 'Deploy Contract'}
-          </button>
-        </div>
-      );
-    }
-    return (
-      <div className="interact-view">
-        <div className="count-display">
-          Current Confidential Count: <span>{count === null ? 'Loading...' : count}</span>
-        </div>
-        <div className="interaction-box">
-          <input 
-            type="number" 
-            value={inputValue} 
-            onChange={(e) => setInputValue(parseInt(e.target.value, 10) || 1)}
-            min="1"
-          />
-          <button onClick={() => handleTransaction('increment')} disabled={isLoading || count === null}>
-            {isLoading ? 'Processing...' : 'Increment'}
-          </button>
-          <button onClick={() => handleTransaction('decrement')} disabled={isLoading || count === null}>
-            {isLoading ? 'Processing...' : 'Decrement'}
-          </button>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="app-wrapper">
       <div className="container">
         <div className="header">
           <h1 className="title">ZAMA FHE Contract Deployer</h1>
-          <ConnectButton />
+          <ConnectButton showBalance={true} />
         </div>
-        
-        {renderContent()}
-        
+
+        <p>Launch your confidential smart contract on the Sepolia Testnet.</p>
+
+        <div className="deploy-view">
+          <button onClick={handleDeploy} disabled={!isConnected || isLoading}>
+            { !isConnected ? 'Connect Wallet First' : isLoading ? 'Deploying...' : 'Deploy Contract' }
+          </button>
+        </div>
+
         <div className="status">{status}</div>
 
         {deployedAddress && (
