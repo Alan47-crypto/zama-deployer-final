@@ -1,39 +1,33 @@
-# 🚀 ZAMA FHE Contract Deployer & Interactor
+# 🚀 ZAMA FHE Contract Deployer
 
-A simple yet powerful one-click web tool to deploy and interact with a confidential FHE (Fully Homomorphic Encryption) counter smart contract on the Sepolia testnet, built with a modern tech stack.
+A simple and beautifully designed one-click web tool to deploy a confidential FHE (Fully Homomorphic Encryption) counter smart contract to the Sepolia testnet.
 
-![App Screenshot](https://i.imgur.com/eB3fT0g.png)
-
+![App Screenshot](https://i.imgur.com/3nBZmC0.png)
 ### ✨ Features
 
-* **🌐 One-Click Deployment:** Connect your wallet and deploy a fresh `FHECounter` contract to the Sepolia testnet with a single button click.
-* **🔐 Confidential Interactions:** Perform `increment` and `decrement` operations with encrypted values. The contract logic runs without ever decrypting the numbers on-chain, thanks to the power of Zama's FHEVM.
-* **📟 Real-Time State:** After each transaction, the dApp automatically fetches the new encrypted count from the contract and decrypts it client-side for you to view.
+* **🚀 One-Click Deployment:** Connect your wallet and deploy a fresh `FHECounter` contract to the Sepolia testnet with a single button click.
 * **🎨 Modern, Branded UI:** A clean, responsive user interface built with React, featuring a custom Zama-branded theme.
-* **🦊 Seamless Wallet Connection:** Uses RainbowKit to provide a smooth, professional multi-wallet connection experience.
+* **🦊 Seamless Wallet Connection:** Uses the industry-standard RainbowKit library to provide a smooth, professional multi-wallet connection experience.
+* **✅ Instant Feedback:** The UI provides clear status updates during the deployment process and displays the final contract address upon success.
 
 ### 🛠️ Tech Stack
 
 * **Frontend:** React (bootstrapped with Vite)
 * **Wallet Connection:** RainbowKit, wagmi, viem
 * **Blockchain Interaction:** ethers.js v5
-* **Client-Side Encryption:** fhevmjs
 * **Deployment:** Hosted live on Vercel
 
 ### 🤔 How It Works
 
-This application provides a full lifecycle for your smart contract in two stages:
+This tool simplifies the process of deploying the `FHECounter` smart contract. A user can visit the web page, connect their wallet, and ensure they are on the Sepolia network. Clicking a single "Deploy Contract" button will send the transaction to the blockchain. The tool then provides the address of the newly deployed contract, which can be viewed on a block explorer.
 
-1.  **Deploy Stage:** First, you connect your wallet and ensure you are on the Sepolia network. Clicking "Deploy Contract" sends the transaction to create your own unique instance of the `FHECounter`.
-2.  **Interact Stage:** Once the contract is deployed, the UI automatically updates to an interaction panel. Here you can input a number, click "Increment" or "Decrement", approve the transaction in your wallet, and watch the confidential count update in real-time.
+### ▶️ Getting Started
 
-### ▶️ Getting Started (Using the Live App)
-
-1.  Visit the live site: [zama-deployer-final.vercel.app](https://zama-deployer-final.vercel.app/)
+1.  Visit the live site for the application.
 2.  Make sure your browser wallet (e.g., MetaMask) is connected to the **Sepolia Testnet**.
-3.  Click **"Connect Wallet"** and approve the connection.
-4.  Click **"Deploy Contract"** and approve the transaction.
-5.  Once deployed, use the input field and buttons to interact with your new confidential contract!
+3.  Click the connect button in the top-right corner and approve the connection in your wallet.
+4.  Click **"Deploy Contract"** and approve the transaction in your wallet.
+5.  Once successful, copy your new contract address from the bottom of the tool!
 
 ### 💻 Local Development
 
